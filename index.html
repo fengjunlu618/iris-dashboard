@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鸢尾花多维分析看板 · Polars 可视化</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230C1220'/%3E%3Cellipse cx='16' cy='11' rx='4.2' ry='6.5' fill='%238B7CF6'/%3E%3Cellipse cx='16' cy='11' rx='4.2' ry='6.5' fill='%235E8BFF' transform='rotate(72 16 11)'/%3E%3Cellipse cx='16' cy='11' rx='4.2' ry='6.5' fill='%23E8709E' transform='rotate(144 16 11)'/%3E%3Ccircle cx='16' cy='22' r='2.2' fill='%23EDEFFF'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;800&family=Noto+Sans+SC:wght@300;400;500;600&display=swap">
+<style>
+:root{
+  --bg0:#070B14;
+  --bg1:#0C1220;
+  --bg2:#111A2E;
+  --line:rgba(151,168,255,.10);
+  --line2:rgba(151,168,255,.18);
+  --txt0:#EDEFFF;
+  --txt1:#9AA4C4;
+  --txt2:#5F6A8C;
+  --acc:#8B7CF6;
+  --acc2:#5E8BFF;
+  --c1:#5E8BFF;
+  --c2:#9A6DF0;
+  --c3:#E8709E;
+  --serif:'Noto Serif SC','Source Han Serif SC','Songti SC','STSong',serif;
+  --sans:'Noto Sans SC','Source Han Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg0);
+  background-image:
+    radial-gradient(1100px 520px at 12% -6%, rgba(139,124,246,.16), transparent 60%),
+    radial-gradient(900px 480px at 96% 104%, rgba(94,139,255,.12), transparent 60%);
+  color:var(--txt0);
+  font-family:var(--sans);
+  font-weight:300;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:44px 28px 60px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ===== 页头 ===== */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:34px}
+.kicker{font-size:12px;letter-spacing:.22em;color:var(--txt2);margin-bottom:10px}
+h1{font-family:var(--serif);font-weight:800;font-size:clamp(28px,4.6vw,44px);line-height:1.25;letter-spacing:.01em}
+h1 em{font-style:normal;background:linear-gradient(92deg,var(--acc2),var(--acc) 55%,var(--c3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--txt1);font-size:14px;margin-top:12px;max-width:640px}
+.header-meta{text-align:right;font-size:12px;color:var(--txt2);line-height:1.9}
+.header-meta b{color:var(--txt1);font-weight:500}
+
+/* ===== KPI ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.kpi{
+  background:linear-gradient(180deg,rgba(23,31,54,.55),rgba(13,19,34,.85));
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px 20px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+  position:relative;
+  overflow:hidden;
+}
+.kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--acc2),var(--acc))}
+.kpi .v{font-size:30px;font-weight:600;line-height:1.1;font-family:var(--serif)}
+.kpi .l{font-size:12px;color:var(--txt1);margin-top:6px}
+.kpi .s{font-size:11px;color:var(--txt2);margin-top:2px}
+
+/* ===== 图表卡片 ===== */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.card{
+  background:linear-gradient(180deg,rgba(23,31,54,.5),rgba(13,19,34,.88));
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:20px 22px 16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+  display:flex;flex-direction:column;
+}
+.card.span2{grid-column:span 2}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}
+.card-head h2{font-family:var(--serif);font-weight:600;font-size:17px;letter-spacing:.02em}
+.card-head .tag{font-size:11px;color:var(--txt2);letter-spacing:.08em;white-space:nowrap}
+.card .note{font-size:12px;color:var(--txt1);margin-bottom:10px}
+.chart{flex:1;min-height:330px;height:330px}
+.insight{font-size:12px;color:var(--txt2);border-top:1px solid var(--line);padding-top:10px;margin-top:8px}
+.insight b{color:var(--txt1);font-weight:500}
+
+/* ===== 页脚 ===== */
+footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--txt2)}
+
+@media (max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:960px){
+  .grid{grid-template-columns:1fr}
+  .card.span2{grid-column:span 1}
+}
+@media (max-width:640px){
+  .wrap{padding:28px 16px 44px}
+  .header-meta{text-align:left}
+  .kpi-grid{grid-template-columns:1fr}
+  .kpi .s{font-size:12px}
+  .card{padding:16px 16px 12px}
+  .card .note,.card .insight{font-size:13px}
+  .chart{min-height:300px;height:300px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="kicker">IRIS DATASET · POLARS VISUAL LAB</div>
+      <h1>鸢尾花<em>多维</em>分析看板</h1>
+      <p class="lead">经典鸢尾花数据集（150 行）的四维花部测量与三物种对照，全部统计由 Polars 2.1 计算导出，图形由 ECharts 渲染。</p>
+    </div>
+    <div class="header-meta">
+      样本规模 <b class="num">150</b><br>
+      数据源 <b>iris.csv</b> · 实测快照<br>
+      生成于 <b>2026-10-28</b>
+    </div>
+  </header>
+
+  <section class="kpi-grid" aria-label="核心指标">
+    <div class="kpi"><div class="v num">150</div><div class="l">样本总量</div><div class="s">150 条观测记录</div></div>
+    <div class="kpi"><div class="v num">3</div><div class="l">物种类别</div><div class="s">每类各 50 条</div></div>
+    <div class="kpi"><div class="v num">4</div><div class="l">花部特征</div><div class="s">花萼长宽 · 花瓣长宽</div></div>
+    <div class="kpi"><div class="v num">0.963</div><div class="l">最强相关</div><div class="s">花瓣长 × 花瓣宽</div></div>
+  </section>
+
+  <section class="grid" aria-label="图表">
+    <div class="card">
+      <div class="card-head"><h2>三物种 × 四特征均值</h2><span class="tag">GROUP MEANS</span></div>
+      <p class="note">各物种四个花部尺寸的算术平均（cm）</p>
+      <div class="chart" id="chart-means"></div>
+      <p class="insight"><b>解读</b>　setosa 花瓣远小于另两类，virginica 在花萼长与花瓣尺寸上均为最大</p>
+    </div>
+
+    <div class="card span2">
+      <div class="card-head"><h2>花部尺寸分布 · 箱线</h2><span class="tag">BOXPLOT</span></div>
+      <p class="note">每物种每特征的最小值、四分位与最大值（cm），箱体为中位数 ± IQR</p>
+      <div class="chart" id="chart-box"></div>
+      <p class="insight"><b>解读</b>　三类在花萼宽上重叠最多，花瓣尺寸区间几乎完全分离</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>特征相关矩阵</h2><span class="tag">PEARSON r</span></div>
+      <p class="note">四个花部特征两两之间的皮尔逊相关系数</p>
+      <div class="chart" id="chart-corr"></div>
+      <p class="insight"><b>解读</b>　花瓣长与花瓣宽 r=0.963 最高，花萼宽与其余三特征均呈负相关</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>花瓣长 × 花瓣宽</h2><span class="tag">SCATTER · r=0.963</span></div>
+      <p class="note">150 个样本按物种着色，虚线为总体回归线</p>
+      <div class="chart" id="chart-plpw"></div>
+      <p class="insight"><b>解读</b>　三物种沿对角线排成清晰三段，花瓣尺寸是判别性最强的维度</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>花萼长 × 花瓣长</h2><span class="tag">SCATTER · r=0.872</span></div>
+      <p class="note">150 个样本按物种着色</p>
+      <div class="chart" id="chart-slpl"></div>
+      <p class="insight"><b>解读</b>　versicolor 与 virginica 在此二维平面上存在部分重叠</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>物种形态轮廓</h2><span class="tag">RADAR · 归一化</span></div>
+      <p class="note">四特征均值按全局最小值最大值归一化到 0–1，仅比较形态</p>
+      <div class="chart" id="chart-radar"></div>
+      <p class="insight"><b>解读</b>　三类轮廓区分明显，virginica 在各维度取值普遍更高</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>花瓣长分布</h2><span class="tag">HISTOGRAM</span></div>
+      <p class="note">按 1cm 区间分组、三物种堆叠计数</p>
+      <div class="chart" id="chart-hist"></div>
+      <p class="insight"><b>解读</b>　花瓣长呈清晰三峰分布，对应三个物种，setosa 集中于 1–2cm</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>数据来源：经典鸢尾花数据集 iris.csv（150 行 × 6 列）</span>
+    <span>统计引擎：Polars 2.1.0 · 可视化：ECharts 5 · 2026-10-28</span>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script>window.echarts||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"><\/script>')</script>
+<script>
+
+var DATA = {
+ "kpi": {
+  "rows": 150,
+  "species": 3,
+  "features": 4,
+  "per_species": [
+   50,
+   50,
+   50
+  ]
+ },
+ "group_means": {
+  "species": [
+   "Iris-setosa",
+   "Iris-versicolor",
+   "Iris-virginica"
+  ],
+  "series": {
+   "SepalLengthCm": [
+    5.01,
+    5.94,
+    6.59
+   ],
+   "SepalWidthCm": [
+    3.42,
+    2.77,
+    2.97
+   ],
+   "PetalLengthCm": [
+    1.46,
+    4.26,
+    5.55
+   ],
+   "PetalWidthCm": [
+    0.24,
+    1.33,
+    2.03
+   ]
+  }
+ },
+ "boxplot": {
+  "features": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm"
+  ],
+  "species": {
+   "Iris-setosa": [
+    [
+     4.3,
+     4.8,
+     5.0,
+     5.2,
+     5.8
+    ],
+    [
+     2.3,
+     3.12,
+     3.4,
+     3.68,
+     4.4
+    ],
+    [
+     1.0,
+     1.4,
+     1.5,
+     1.58,
+     1.9
+    ],
+    [
+     0.1,
+     0.2,
+     0.2,
+     0.3,
+     0.6
+    ]
+   ],
+   "Iris-versicolor": [
+    [
+     4.9,
+     5.6,
+     5.9,
+     6.3,
+     7.0
+    ],
+    [
+     2.0,
+     2.52,
+     2.8,
+     3.0,
+     3.4
+    ],
+    [
+     3.0,
+     4.0,
+     4.35,
+     4.6,
+     5.1
+    ],
+    [
+     1.0,
+     1.2,
+     1.3,
+     1.5,
+     1.8
+    ]
+   ],
+   "Iris-virginica": [
+    [
+     4.9,
+     6.22,
+     6.5,
+     6.9,
+     7.9
+    ],
+    [
+     2.2,
+     2.8,
+     3.0,
+     3.18,
+     3.8
+    ],
+    [
+     4.5,
+     5.1,
+     5.55,
+     5.88,
+     6.9
+    ],
+    [
+     1.4,
+     1.8,
+     2.0,
+     2.3,
+     2.5
+    ]
+   ]
+  }
+ },
+ "corr_matrix": {
+  "features": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm"
+  ],
+  "matrix": [
+   [
+    1.0,
+    -0.109,
+    0.872,
+    0.818
+   ],
+   [
+    -0.109,
+    1.0,
+    -0.421,
+    -0.357
+   ],
+   [
+    0.872,
+    -0.421,
+    1.0,
+    0.963
+   ],
+   [
+    0.818,
+    -0.357,
+    0.963,
+    1.0
+   ]
+  ]
+ },
+ "scatter_pl_pw": {
+  "Iris-setosa": [
+   [
+    1.4,
+    0.2
+   ],
+   [
+    1.4,
+    0.2
+   ],
+   [
+    1.3,
+    0.2
+   ],
+   [
+    1.5,
+    0.2
+   ],
+   [
+    1.4,
+    0.2
+   ],
+   [
+    1.7,
+    0.4
+   ],
+   [
+    1.4,
+    0.3
+   ],
+   [
+    1.5,
+    0.2
+   ],
+   [
+    1.4,
+    0.2
+   ],
+   [
+    1.5,
+    0.1
+   ],
+   [
+    1.5,
+    0.2
+   ],
+   [
+    1.6,
+    0.2
+   ],
+   [
+    1.4,
+    0.1
+   ],
+   [
+    1.1,
+    0.1
+   ],
+   [
+    1.2,
+    0.2
+   ],
+   [
+    1.5,
+    0.4
+   ],
+   [
+    1.3,
+    0.4
+   ],
+   [
+    1.4,
+    0.3
+   ],
+   [
+    1.7,
+    0.3
+   ],
+   [
+    1.5,
+    0.3
+   ],
+   [
+    1.7,
+    0.2
+   ],
+   [
+    1.5,
+    0.4
+   ],
+   [
+    1.0,
+    0.2
+   ],
+   [
+    1.7,
+    0.5
+   ],
+   [
+    1.9,
+    0.2
+   ],
+   [
+    1.6,
+    0.2
+   ],
+   [
+    1.6,
+    0.4
+   ],
+   [
+    1.5,
+    0.2
+   ],
+   [
+    1.4,
+    0.2
+   ],
+   [
+    1.6,
+    0.2
+   ],
+   [
+    1.6,
+    0.2
+   ],
+   [
+    1.5,
+    0.4
+   ],
+   [
+    1.5,
+    0.1
+   ],
+   [
+    1.4,
+    0.2
+   ],
+   [
+    1.5,
+    0.1
+   ],
+   [
+    1.2,
+    0.2
+   ],
+   [
+    1.3,
+    0.2
+   ],
+   [
+    1.5,
+    0.1
+   ],
+   [
+    1.3,
+    0.2
+   ],
+   [
+    1.5,
+    0.2
+   ],
+   [
+    1.3,
+    0.3
+   ],
+   [
+    1.3,
+    0.3
+   ],
+   [
+    1.3,
+    0.2
+   ],
+   [
+    1.6,
+    0.6
+   ],
+   [
+    1.9,
+    0.4
+   ],
+   [
+    1.4,
+    0.3
+   ],
+   [
+    1.6,
+    0.2
+   ],
+   [
+    1.4,
+    0.2
+   ],
+   [
+    1.5,
+    0.2
+   ],
+   [
+    1.4,
+    0.2
+   ]
+  ],
+  "Iris-versicolor": [
+   [
+    4.7,
+    1.4
+   ],
+   [
+    4.5,
+    1.5
+   ],
+   [
+    4.9,
+    1.5
+   ],
+   [
+    4.0,
+    1.3
+   ],
+   [
+    4.6,
+    1.5
+   ],
+   [
+    4.5,
+    1.3
+   ],
+   [
+    4.7,
+    1.6
+   ],
+   [
+    3.3,
+    1.0
+   ],
+   [
+    4.6,
+    1.3
+   ],
+   [
+    3.9,
+    1.4
+   ],
+   [
+    3.5,
+    1.0
+   ],
+   [
+    4.2,
+    1.5
+   ],
+   [
+    4.0,
+    1.0
+   ],
+   [
+    4.7,
+    1.4
+   ],
+   [
+    3.6,
+    1.3
+   ],
+   [
+    4.4,
+    1.4
+   ],
+   [
+    4.5,
+    1.5
+   ],
+   [
+    4.1,
+    1.0
+   ],
+   [
+    4.5,
+    1.5
+   ],
+   [
+    3.9,
+    1.1
+   ],
+   [
+    4.8,
+    1.8
+   ],
+   [
+    4.0,
+    1.3
+   ],
+   [
+    4.9,
+    1.5
+   ],
+   [
+    4.7,
+    1.2
+   ],
+   [
+    4.3,
+    1.3
+   ],
+   [
+    4.4,
+    1.4
+   ],
+   [
+    4.8,
+    1.4
+   ],
+   [
+    5.0,
+    1.7
+   ],
+   [
+    4.5,
+    1.5
+   ],
+   [
+    3.5,
+    1.0
+   ],
+   [
+    3.8,
+    1.1
+   ],
+   [
+    3.7,
+    1.0
+   ],
+   [
+    3.9,
+    1.2
+   ],
+   [
+    5.1,
+    1.6
+   ],
+   [
+    4.5,
+    1.5
+   ],
+   [
+    4.5,
+    1.6
+   ],
+   [
+    4.7,
+    1.5
+   ],
+   [
+    4.4,
+    1.3
+   ],
+   [
+    4.1,
+    1.3
+   ],
+   [
+    4.0,
+    1.3
+   ],
+   [
+    4.4,
+    1.2
+   ],
+   [
+    4.6,
+    1.4
+   ],
+   [
+    4.0,
+    1.2
+   ],
+   [
+    3.3,
+    1.0
+   ],
+   [
+    4.2,
+    1.3
+   ],
+   [
+    4.2,
+    1.2
+   ],
+   [
+    4.2,
+    1.3
+   ],
+   [
+    4.3,
+    1.3
+   ],
+   [
+    3.0,
+    1.1
+   ],
+   [
+    4.1,
+    1.3
+   ]
+  ],
+  "Iris-virginica": [
+   [
+    6.0,
+    2.5
+   ],
+   [
+    5.1,
+    1.9
+   ],
+   [
+    5.9,
+    2.1
+   ],
+   [
+    5.6,
+    1.8
+   ],
+   [
+    5.8,
+    2.2
+   ],
+   [
+    6.6,
+    2.1
+   ],
+   [
+    4.5,
+    1.7
+   ],
+   [
+    6.3,
+    1.8
+   ],
+   [
+    5.8,
+    1.8
+   ],
+   [
+    6.1,
+    2.5
+   ],
+   [
+    5.1,
+    2.0
+   ],
+   [
+    5.3,
+    1.9
+   ],
+   [
+    5.5,
+    2.1
+   ],
+   [
+    5.0,
+    2.0
+   ],
+   [
+    5.1,
+    2.4
+   ],
+   [
+    5.3,
+    2.3
+   ],
+   [
+    5.5,
+    1.8
+   ],
+   [
+    6.7,
+    2.2
+   ],
+   [
+    6.9,
+    2.3
+   ],
+   [
+    5.0,
+    1.5
+   ],
+   [
+    5.7,
+    2.3
+   ],
+   [
+    4.9,
+    2.0
+   ],
+   [
+    6.7,
+    2.0
+   ],
+   [
+    4.9,
+    1.8
+   ],
+   [
+    5.7,
+    2.1
+   ],
+   [
+    6.0,
+    1.8
+   ],
+   [
+    4.8,
+    1.8
+   ],
+   [
+    4.9,
+    1.8
+   ],
+   [
+    5.6,
+    2.1
+   ],
+   [
+    5.8,
+    1.6
+   ],
+   [
+    6.1,
+    1.9
+   ],
+   [
+    6.4,
+    2.0
+   ],
+   [
+    5.6,
+    2.2
+   ],
+   [
+    5.1,
+    1.5
+   ],
+   [
+    5.6,
+    1.4
+   ],
+   [
+    6.1,
+    2.3
+   ],
+   [
+    5.6,
+    2.4
+   ],
+   [
+    5.5,
+    1.8
+   ],
+   [
+    4.8,
+    1.8
+   ],
+   [
+    5.4,
+    2.1
+   ],
+   [
+    5.6,
+    2.4
+   ],
+   [
+    5.1,
+    2.3
+   ],
+   [
+    5.1,
+    1.9
+   ],
+   [
+    5.9,
+    2.3
+   ],
+   [
+    5.7,
+    2.5
+   ],
+   [
+    5.2,
+    2.3
+   ],
+   [
+    5.0,
+    1.9
+   ],
+   [
+    5.2,
+    2.0
+   ],
+   [
+    5.4,
+    2.3
+   ],
+   [
+    5.1,
+    1.8
+   ]
+  ]
+ },
+ "scatter_sl_pl": {
+  "Iris-setosa": [
+   [
+    5.1,
+    1.4
+   ],
+   [
+    4.9,
+    1.4
+   ],
+   [
+    4.7,
+    1.3
+   ],
+   [
+    4.6,
+    1.5
+   ],
+   [
+    5.0,
+    1.4
+   ],
+   [
+    5.4,
+    1.7
+   ],
+   [
+    4.6,
+    1.4
+   ],
+   [
+    5.0,
+    1.5
+   ],
+   [
+    4.4,
+    1.4
+   ],
+   [
+    4.9,
+    1.5
+   ],
+   [
+    5.4,
+    1.5
+   ],
+   [
+    4.8,
+    1.6
+   ],
+   [
+    4.8,
+    1.4
+   ],
+   [
+    4.3,
+    1.1
+   ],
+   [
+    5.8,
+    1.2
+   ],
+   [
+    5.7,
+    1.5
+   ],
+   [
+    5.4,
+    1.3
+   ],
+   [
+    5.1,
+    1.4
+   ],
+   [
+    5.7,
+    1.7
+   ],
+   [
+    5.1,
+    1.5
+   ],
+   [
+    5.4,
+    1.7
+   ],
+   [
+    5.1,
+    1.5
+   ],
+   [
+    4.6,
+    1.0
+   ],
+   [
+    5.1,
+    1.7
+   ],
+   [
+    4.8,
+    1.9
+   ],
+   [
+    5.0,
+    1.6
+   ],
+   [
+    5.0,
+    1.6
+   ],
+   [
+    5.2,
+    1.5
+   ],
+   [
+    5.2,
+    1.4
+   ],
+   [
+    4.7,
+    1.6
+   ],
+   [
+    4.8,
+    1.6
+   ],
+   [
+    5.4,
+    1.5
+   ],
+   [
+    5.2,
+    1.5
+   ],
+   [
+    5.5,
+    1.4
+   ],
+   [
+    4.9,
+    1.5
+   ],
+   [
+    5.0,
+    1.2
+   ],
+   [
+    5.5,
+    1.3
+   ],
+   [
+    4.9,
+    1.5
+   ],
+   [
+    4.4,
+    1.3
+   ],
+   [
+    5.1,
+    1.5
+   ],
+   [
+    5.0,
+    1.3
+   ],
+   [
+    4.5,
+    1.3
+   ],
+   [
+    4.4,
+    1.3
+   ],
+   [
+    5.0,
+    1.6
+   ],
+   [
+    5.1,
+    1.9
+   ],
+   [
+    4.8,
+    1.4
+   ],
+   [
+    5.1,
+    1.6
+   ],
+   [
+    4.6,
+    1.4
+   ],
+   [
+    5.3,
+    1.5
+   ],
+   [
+    5.0,
+    1.4
+   ]
+  ],
+  "Iris-versicolor": [
+   [
+    7.0,
+    4.7
+   ],
+   [
+    6.4,
+    4.5
+   ],
+   [
+    6.9,
+    4.9
+   ],
+   [
+    5.5,
+    4.0
+   ],
+   [
+    6.5,
+    4.6
+   ],
+   [
+    5.7,
+    4.5
+   ],
+   [
+    6.3,
+    4.7
+   ],
+   [
+    4.9,
+    3.3
+   ],
+   [
+    6.6,
+    4.6
+   ],
+   [
+    5.2,
+    3.9
+   ],
+   [
+    5.0,
+    3.5
+   ],
+   [
+    5.9,
+    4.2
+   ],
+   [
+    6.0,
+    4.0
+   ],
+   [
+    6.1,
+    4.7
+   ],
+   [
+    5.6,
+    3.6
+   ],
+   [
+    6.7,
+    4.4
+   ],
+   [
+    5.6,
+    4.5
+   ],
+   [
+    5.8,
+    4.1
+   ],
+   [
+    6.2,
+    4.5
+   ],
+   [
+    5.6,
+    3.9
+   ],
+   [
+    5.9,
+    4.8
+   ],
+   [
+    6.1,
+    4.0
+   ],
+   [
+    6.3,
+    4.9
+   ],
+   [
+    6.1,
+    4.7
+   ],
+   [
+    6.4,
+    4.3
+   ],
+   [
+    6.6,
+    4.4
+   ],
+   [
+    6.8,
+    4.8
+   ],
+   [
+    6.7,
+    5.0
+   ],
+   [
+    6.0,
+    4.5
+   ],
+   [
+    5.7,
+    3.5
+   ],
+   [
+    5.5,
+    3.8
+   ],
+   [
+    5.5,
+    3.7
+   ],
+   [
+    5.8,
+    3.9
+   ],
+   [
+    6.0,
+    5.1
+   ],
+   [
+    5.4,
+    4.5
+   ],
+   [
+    6.0,
+    4.5
+   ],
+   [
+    6.7,
+    4.7
+   ],
+   [
+    6.3,
+    4.4
+   ],
+   [
+    5.6,
+    4.1
+   ],
+   [
+    5.5,
+    4.0
+   ],
+   [
+    5.5,
+    4.4
+   ],
+   [
+    6.1,
+    4.6
+   ],
+   [
+    5.8,
+    4.0
+   ],
+   [
+    5.0,
+    3.3
+   ],
+   [
+    5.6,
+    4.2
+   ],
+   [
+    5.7,
+    4.2
+   ],
+   [
+    5.7,
+    4.2
+   ],
+   [
+    6.2,
+    4.3
+   ],
+   [
+    5.1,
+    3.0
+   ],
+   [
+    5.7,
+    4.1
+   ]
+  ],
+  "Iris-virginica": [
+   [
+    6.3,
+    6.0
+   ],
+   [
+    5.8,
+    5.1
+   ],
+   [
+    7.1,
+    5.9
+   ],
+   [
+    6.3,
+    5.6
+   ],
+   [
+    6.5,
+    5.8
+   ],
+   [
+    7.6,
+    6.6
+   ],
+   [
+    4.9,
+    4.5
+   ],
+   [
+    7.3,
+    6.3
+   ],
+   [
+    6.7,
+    5.8
+   ],
+   [
+    7.2,
+    6.1
+   ],
+   [
+    6.5,
+    5.1
+   ],
+   [
+    6.4,
+    5.3
+   ],
+   [
+    6.8,
+    5.5
+   ],
+   [
+    5.7,
+    5.0
+   ],
+   [
+    5.8,
+    5.1
+   ],
+   [
+    6.4,
+    5.3
+   ],
+   [
+    6.5,
+    5.5
+   ],
+   [
+    7.7,
+    6.7
+   ],
+   [
+    7.7,
+    6.9
+   ],
+   [
+    6.0,
+    5.0
+   ],
+   [
+    6.9,
+    5.7
+   ],
+   [
+    5.6,
+    4.9
+   ],
+   [
+    7.7,
+    6.7
+   ],
+   [
+    6.3,
+    4.9
+   ],
+   [
+    6.7,
+    5.7
+   ],
+   [
+    7.2,
+    6.0
+   ],
+   [
+    6.2,
+    4.8
+   ],
+   [
+    6.1,
+    4.9
+   ],
+   [
+    6.4,
+    5.6
+   ],
+   [
+    7.2,
+    5.8
+   ],
+   [
+    7.4,
+    6.1
+   ],
+   [
+    7.9,
+    6.4
+   ],
+   [
+    6.4,
+    5.6
+   ],
+   [
+    6.3,
+    5.1
+   ],
+   [
+    6.1,
+    5.6
+   ],
+   [
+    7.7,
+    6.1
+   ],
+   [
+    6.3,
+    5.6
+   ],
+   [
+    6.4,
+    5.5
+   ],
+   [
+    6.0,
+    4.8
+   ],
+   [
+    6.9,
+    5.4
+   ],
+   [
+    6.7,
+    5.6
+   ],
+   [
+    6.9,
+    5.1
+   ],
+   [
+    5.8,
+    5.1
+   ],
+   [
+    6.8,
+    5.9
+   ],
+   [
+    6.7,
+    5.7
+   ],
+   [
+    6.7,
+    5.2
+   ],
+   [
+    6.3,
+    5.0
+   ],
+   [
+    6.5,
+    5.2
+   ],
+   [
+    6.2,
+    5.4
+   ],
+   [
+    5.9,
+    5.1
+   ]
+  ]
+ },
+ "radar": {
+  "features": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm"
+  ],
+  "norm": {
+   "Iris-setosa": [
+    0.197,
+    0.592,
+    0.078,
+    0.058
+   ],
+   "Iris-versicolor": [
+    0.456,
+    0.321,
+    0.553,
+    0.513
+   ],
+   "Iris-virginica": [
+    0.636,
+    0.404,
+    0.771,
+    0.804
+   ]
+  },
+  "orig": {
+   "Iris-setosa": {
+    "SepalLengthCm": 5.01,
+    "SepalWidthCm": 3.42,
+    "PetalLengthCm": 1.46,
+    "PetalWidthCm": 0.24
+   },
+   "Iris-versicolor": {
+    "SepalLengthCm": 5.94,
+    "SepalWidthCm": 2.77,
+    "PetalLengthCm": 4.26,
+    "PetalWidthCm": 1.33
+   },
+   "Iris-virginica": {
+    "SepalLengthCm": 6.59,
+    "SepalWidthCm": 2.97,
+    "PetalLengthCm": 5.55,
+    "PetalWidthCm": 2.03
+   }
+  },
+  "mins": {
+   "SepalLengthCm": 4.3,
+   "SepalWidthCm": 2.0,
+   "PetalLengthCm": 1.0,
+   "PetalWidthCm": 0.1
+  },
+  "maxs": {
+   "SepalLengthCm": 7.9,
+   "SepalWidthCm": 4.4,
+   "PetalLengthCm": 6.9,
+   "PetalWidthCm": 2.5
+  }
+ },
+ "hist": {
+  "bins": [
+   "[1,2)",
+   "[2,3)",
+   "[3,4)",
+   "[4,5)",
+   "[5,6)",
+   "[6,7)"
+  ],
+  "species": {
+   "Iris-setosa": [
+    50,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "Iris-versicolor": [
+    0,
+    0,
+    11,
+    37,
+    2,
+    0
+   ],
+   "Iris-virginica": [
+    0,
+    0,
+    0,
+    6,
+    33,
+    11
+   ]
+  }
+ }
+};
+
+</script>
+<script>
+(function(){
+var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var FONT = 'Noto Sans SC';
+var PAL = ['#5E8BFF', '#9A6DF0', '#E8709E'];
+var SPECIES = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica'];
+var SPEC_LABEL = { 'Iris-setosa':'setosa', 'Iris-versicolor':'versicolor', 'Iris-virginica':'virginica' };
+var FEATS = ['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm'];
+var FEAT_LABEL = { 'SepalLengthCm':'花萼长', 'SepalWidthCm':'花萼宽', 'PetalLengthCm':'花瓣长', 'PetalWidthCm':'花瓣宽' };
+var NL = String.fromCharCode(10);
+var charts = [];
+
+function base(){
+  return {
+    textStyle: { fontFamily: FONT },
+    animation: !reduceMotion,
+    tooltip: { triggerOn:'click', renderMode:'richText', confine:true }
+  };
+}
+function merge(o1, o2){ for (var k in o2) o1[k] = o2[k]; return o1; }
+function ax(extra){
+  var o = { axisLine:{ lineStyle:{ color:'rgba(151,168,255,.22)' } }, axisTick:{ show:false }, axisLabel:{ color:'#9AA4C4', fontSize:11 } };
+  for (var k in extra) o[k] = extra[k];
+  return o;
+}
+function leg(top){
+  return { top: top || 0, textStyle:{ color:'#9AA4C4', fontSize:11 }, itemWidth:14, itemHeight:8 };
+}
+function init(id, option){
+  var el = document.getElementById(id);
+  if (!el || !window.echarts) return;
+  var c = echarts.init(el);
+  c.setOption(option);
+  charts.push(c);
+  return c;
+}
+
+/* 1 均值对比 */
+(function(){
+  var series = SPECIES.map(function(sp, i){
+    return {
+      name: SPEC_LABEL[sp],
+      type: 'bar',
+      barWidth: 16,
+      data: FEATS.map(function(f){ return DATA.group_means.series[f][i]; })
+    };
+  });
+  init('chart-means', merge(base(), {
+    color: PAL,
+    tooltip: merge(base().tooltip, { trigger:'axis' }),
+    legend: leg(),
+    grid: { left:8, right:8, top:42, bottom:8, containLabel:true },
+    xAxis: ax({ type:'category', data: FEATS.map(function(f){ return FEAT_LABEL[f]; }) }),
+    yAxis: { type:'value', name:'均值(cm)', nameTextStyle:{ color:'#5F6A8C', fontSize:11 }, axisLabel:{ color:'#9AA4C4', fontSize:11 }, splitLine:{ lineStyle:{ color:'rgba(151,168,255,.08)' } } },
+    series: series
+  }));
+})();
+
+/* 2 箱线图 */
+(function(){
+  init('chart-box', merge(base(), {
+    color: PAL,
+    tooltip: merge(base().tooltip, {
+      trigger: 'item',
+      formatter: function(p){
+        var v = p.value || [];
+        var arr = v.length >= 6 ? [v[1],v[2],v[3],v[4],v[5]] : v;
+        return (FEAT_LABEL[p.name] || p.name) + ' · ' + p.seriesName + NL
+          + '最小 ' + arr[0] + NL
+          + 'Q1   ' + arr[1] + NL
+          + '中位 ' + arr[2] + NL
+          + 'Q3   ' + arr[3] + NL
+          + '最大 ' + arr[4];
+      }
+    }),
+    legend: leg(),
+    grid: { left:8, right:8, top:42, bottom:8, containLabel:true },
+    xAxis: ax({ type:'category', data: FEATS.map(function(f){ return FEAT_LABEL[f]; }) }),
+    yAxis: { type:'value', name:'cm', nameTextStyle:{ color:'#5F6A8C', fontSize:11 }, axisLabel:{ color:'#9AA4C4', fontSize:11 }, splitLine:{ lineStyle:{ color:'rgba(151,168,255,.08)' } } },
+    series: SPECIES.map(function(sp, i){
+      return {
+        name: SPEC_LABEL[sp],
+        type: 'boxplot',
+        boxWidth: [10, 22],
+        itemStyle: { color: 'rgba(94,139,255,.16)', borderColor: PAL[i], borderWidth: 1.4 },
+        data: DATA.boxplot.species[sp].map(function(b){ return [b[0], b[1], b[2], b[3], b[4]]; })
+      };
+    })
+  }));
+})();
+
+/* 3 相关矩阵 */
+(function(){
+  var cells = [];
+  for (var i = 0; i < 4; i++)
+    for (var j = 0; j < 4; j++)
+      cells.push([j, i, DATA.corr_matrix.matrix[i][j]]);
+  init('chart-corr', merge(base(), {
+    tooltip: merge(base().tooltip, {
+      trigger: 'item',
+      formatter: function(p){
+        return FEAT_LABEL[DATA.corr_matrix.features[p.value[0]]] + ' × ' + FEAT_LABEL[DATA.corr_matrix.features[p.value[1]]] + NL + 'r = ' + p.value[2].toFixed(3);
+      }
+    }),
+    grid: { left:8, right:58, top:16, bottom:8, containLabel:true },
+    xAxis: ax({ type:'category', data: FEATS.map(function(f){ return FEAT_LABEL[f]; }) }),
+    yAxis: ax({ type:'category', data: FEATS.map(function(f){ return FEAT_LABEL[f]; }) }),
+    visualMap: {
+      min: -1, max: 1, calculable: false, orient: 'vertical', right: 0, top: 'middle',
+      text: ['1', '-1'], textStyle: { color: '#5F6A8C', fontSize: 10 },
+      inRange: { color: ['#2B3F73', '#111A30', '#8B7CF6'] }
+    },
+    series: [{
+      type: 'heatmap',
+      data: cells,
+      label: { show: true, color: '#EDEFFF', fontSize: 11, formatter: function(p){ return p.value[2].toFixed(2); } }
+    }]
+  }));
+})();
+
+/* 4 花瓣长 x 花瓣宽 + 回归线 */
+(function(){
+  var pts = [];
+  SPECIES.forEach(function(sp){ pts = pts.concat(DATA.scatter_pl_pw[sp]); });
+  var n = pts.length, sx = 0, sy = 0, sxy = 0, sxx = 0;
+  pts.forEach(function(p){ sx += p[0]; sy += p[1]; sxy += p[0] * p[1]; sxx += p[0] * p[0]; });
+  var mx = sx / n, my = sy / n;
+  var b = (sxy - n * mx * my) / (sxx - n * mx * mx);
+  var a = my - b * mx;
+  init('chart-plpw', merge(base(), {
+    color: PAL,
+    tooltip: merge(base().tooltip, { trigger: 'item' }),
+    legend: leg(0),
+    grid: { left:8, right:8, top:36, bottom:8, containLabel:true },
+    xAxis: { type:'value', name:'花瓣长(cm)', min:0.8, max:7.4, nameTextStyle:{ color:'#5F6A8C', fontSize:11 }, axisLabel:{ color:'#9AA4C4', fontSize:11 }, splitLine:{ lineStyle:{ color:'rgba(151,168,255,.08)' } } },
+    yAxis: { type:'value', name:'花瓣宽(cm)', min:0, max:2.8, nameTextStyle:{ color:'#5F6A8C', fontSize:11 }, axisLabel:{ color:'#9AA4C4', fontSize:11 }, splitLine:{ lineStyle:{ color:'rgba(151,168,255,.08)' } } },
+    series: SPECIES.map(function(sp, i){
+      return { name: SPEC_LABEL[sp], type:'scatter', symbolSize:9, itemStyle:{ opacity:.85 }, data: DATA.scatter_pl_pw[sp] };
+    }).concat([{
+      name: '回归线', type: 'line', symbol: 'none', silent: true,
+      lineStyle: { type: 'dashed', color: '#EDEFFF', width: 1 },
+      data: [[0.8, a + b * 0.8], [7.4, a + b * 7.4]]
+    }])
+  }));
+})();
+
+/* 5 花萼长 x 花瓣长 */
+(function(){
+  init('chart-slpl', merge(base(), {
+    color: PAL,
+    tooltip: merge(base().tooltip, { trigger: 'item' }),
+    legend: leg(0),
+    grid: { left:8, right:8, top:36, bottom:8, containLabel:true },
+    xAxis: { type:'value', name:'花萼长(cm)', min:4.2, max:8.1, nameTextStyle:{ color:'#5F6A8C', fontSize:11 }, axisLabel:{ color:'#9AA4C4', fontSize:11 }, splitLine:{ lineStyle:{ color:'rgba(151,168,255,.08)' } } },
+    yAxis: { type:'value', name:'花瓣长(cm)', min:0.6, max:7.3, nameTextStyle:{ color:'#5F6A8C', fontSize:11 }, axisLabel:{ color:'#9AA4C4', fontSize:11 }, splitLine:{ lineStyle:{ color:'rgba(151,168,255,.08)' } } },
+    series: SPECIES.map(function(sp, i){
+      return { name: SPEC_LABEL[sp], type:'scatter', symbolSize:9, itemStyle:{ opacity:.85 }, data: DATA.scatter_sl_pl[sp] };
+    })
+  }));
+})();
+
+/* 6 雷达（归一化形态，提示显示原始均值） */
+(function(){
+  var indicator = DATA.radar.features.map(function(f){ return { name: FEAT_LABEL[f], max: 1 }; });
+  init('chart-radar', merge(base(), {
+    color: PAL,
+    tooltip: merge(base().tooltip, {
+      trigger: 'item',
+      formatter: function(p){
+        var spKey = SPECIES[p.seriesIndex];
+        var o = DATA.radar.orig[spKey];
+        var lines = FEATS.map(function(f){ return FEAT_LABEL[f] + ' ' + o[f].toFixed(2) + 'cm'; });
+        return p.seriesName + NL + lines.join(NL);
+      }
+    }),
+    legend: leg(0),
+    radar: {
+      indicator: indicator,
+      radius: '62%',
+      splitArea: { areaStyle: { color: ['rgba(151,168,255,.03)', 'rgba(151,168,255,.07)'] } },
+      splitLine: { lineStyle: { color: 'rgba(151,168,255,.14)' } },
+      axisName: { color: '#9AA4C4', fontSize: 11 }
+    },
+    series: [{
+      type: 'radar',
+      data: SPECIES.map(function(sp, i){
+        return {
+          name: SPEC_LABEL[sp],
+          value: DATA.radar.norm[sp],
+          itemStyle: { color: PAL[i] },
+          lineStyle: { color: PAL[i], width: 1.6 },
+          areaStyle: { opacity: .18 }
+        };
+      })
+    }]
+  }));
+})();
+
+/* 7 花瓣长直方图 */
+(function(){
+  init('chart-hist', merge(base(), {
+    color: PAL,
+    tooltip: merge(base().tooltip, { trigger:'axis', axisPointer:{ type:'shadow' } }),
+    legend: leg(),
+    grid: { left:8, right:8, top:42, bottom:8, containLabel:true },
+    xAxis: ax({ type:'category', data: DATA.hist.bins }),
+    yAxis: { type:'value', name:'样本数', nameTextStyle:{ color:'#5F6A8C', fontSize:11 }, axisLabel:{ color:'#9AA4C4', fontSize:11 }, splitLine:{ lineStyle:{ color:'rgba(151,168,255,.08)' } } },
+    series: SPECIES.map(function(sp, i){
+      return { name: SPEC_LABEL[sp], type:'bar', stack:'total', barWidth: 34, data: DATA.hist.species[sp] };
+    })
+  }));
+})();
+
+window.addEventListener('resize', function(){
+  for (var i = 0; i < charts.length; i++) charts[i].resize();
+});
+})();
+</script>
+</body>
+</html>
