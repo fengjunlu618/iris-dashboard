@@ -1,0 +1,318 @@
+{
+  "src": "鸢尾花多维分析看板.html",
+  "url": "file:///home/user/Doubao/chats/38449812120128258/iris-dashboard/%E9%B8%A2%E5%B0%BE%E8%8A%B1%E5%A4%9A%E7%BB%B4%E5%88%86%E6%9E%90%E7%9C%8B%E6%9D%BF.html",
+  "outdir": "/home/user/Doubao/chats/38449812120128258/iris-dashboard/_shots",
+  "include": [
+    "lint",
+    "screenshots",
+    "structure"
+  ],
+  "shots": {
+    "desktop": {
+      "revealed": 0,
+      "screenshot": "/home/user/Doubao/chats/38449812120128258/iris-dashboard/_shots/鸢尾花多维分析看板_desktop.jpg",
+      "screenshotBytes": 106376,
+      "truncated": false,
+      "structure": {
+        "title": "鸢尾花多维分析看板 · Polars 可视化",
+        "firstH1": "鸢尾花多维分析看板",
+        "viewport": {
+          "w": 1440,
+          "h": 900
+        },
+        "fullpage": {
+          "w": 2572,
+          "h": 2886
+        },
+        "counts": {
+          "section": 2,
+          "h1": 1,
+          "h2": 7,
+          "img": 0,
+          "canvas": 7,
+          "svg": 0,
+          "links": 0,
+          "buttons": 0
+        }
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "horizontalOverflow": [
+        {
+          "tag": "div",
+          "cls": "card span2",
+          "left": 108,
+          "right": 2572,
+          "width": 2464
+        },
+        {
+          "tag": "div",
+          "cls": "card-head",
+          "left": 131,
+          "right": 2549,
+          "width": 2418
+        },
+        {
+          "tag": "span",
+          "cls": "tag",
+          "left": 2496,
+          "right": 2549,
+          "width": 53
+        },
+        {
+          "tag": "p",
+          "cls": "note",
+          "left": 131,
+          "right": 2549,
+          "width": 2418
+        },
+        {
+          "tag": "div",
+          "cls": "chart",
+          "left": 131,
+          "right": 2549,
+          "width": 2418
+        },
+        {
+          "tag": "div",
+          "cls": "",
+          "left": 131,
+          "right": 2549,
+          "width": 2418
+        },
+        {
+          "tag": "canvas",
+          "cls": "",
+          "left": 131,
+          "right": 2549,
+          "width": 2418
+        },
+        {
+          "tag": "p",
+          "cls": "insight",
+          "left": 131,
+          "right": 2549,
+          "width": 2418
+        },
+        {
+          "tag": "div",
+          "cls": "card",
+          "left": 1348,
+          "right": 2572,
+          "width": 1224
+        },
+        {
+          "tag": "div",
+          "cls": "card-head",
+          "left": 1371,
+          "right": 2549,
+          "width": 1178
+        },
+        {
+          "tag": "h2",
+          "cls": "",
+          "left": 1371,
+          "right": 1502,
+          "width": 131
+        },
+        {
+          "tag": "span",
+          "cls": "tag",
+          "left": 2437,
+          "right": 2549,
+          "width": 112
+        },
+        {
+          "tag": "p",
+          "cls": "note",
+          "left": 1371,
+          "right": 2549,
+          "width": 1178
+        },
+        {
+          "tag": "div",
+          "cls": "chart",
+          "left": 1371,
+          "right": 2549,
+          "width": 1178
+        },
+        {
+          "tag": "div",
+          "cls": "",
+          "left": 1371,
+          "right": 2549,
+          "width": 1178
+        },
+        {
+          "tag": "canvas",
+          "cls": "",
+          "left": 1371,
+          "right": 2549,
+          "width": 1178
+        },
+        {
+          "tag": "p",
+          "cls": "insight",
+          "left": 1371,
+          "right": 2549,
+          "width": 1178
+        },
+        {
+          "tag": "div",
+          "cls": "card",
+          "left": 1348,
+          "right": 2572,
+          "width": 1224
+        },
+        {
+          "tag": "div",
+          "cls": "card-head",
+          "left": 1371,
+          "right": 2549,
+          "width": 1178
+        },
+        {
+          "tag": "h2",
+          "cls": "",
+          "left": 1371,
+          "right": 1475,
+          "width": 104
+        }
+      ],
+      "resourceErrors": []
+    },
+    "mobile": {
+      "revealed": 0,
+      "screenshot": "/home/user/Doubao/chats/38449812120128258/iris-dashboard/_shots/鸢尾花多维分析看板_mobile.jpg",
+      "screenshotBytes": 158771,
+      "slices": [
+        "/home/user/Doubao/chats/38449812120128258/iris-dashboard/_shots/鸢尾花多维分析看板_mobile_p1of2.jpg",
+        "/home/user/Doubao/chats/38449812120128258/iris-dashboard/_shots/鸢尾花多维分析看板_mobile_p2of2.jpg"
+      ],
+      "sliceHint": "主图过阈值（字节>800KB 或 高度>4000px），已按 3200px 切片。若主图 Read 失败，改读 slices 里各分片。",
+      "truncated": false,
+      "structure": {
+        "title": "鸢尾花多维分析看板 · Polars 可视化",
+        "firstH1": "鸢尾花多维分析看板",
+        "viewport": {
+          "w": 390,
+          "h": 844
+        },
+        "fullpage": {
+          "w": 390,
+          "h": 4187
+        },
+        "counts": {
+          "section": 2,
+          "h1": 1,
+          "h2": 7,
+          "img": 0,
+          "canvas": 7,
+          "svg": 0,
+          "links": 0,
+          "buttons": 0
+        }
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "horizontalOverflow": [],
+      "resourceErrors": [],
+      "mobileFontIssuesWarning": [
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 12,
+          "text": "IRIS DATASET · POLARS VISUAL LAB"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 12,
+          "text": "样本规模 150\n      数据源 iris.csv · 实测快照\n     "
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 12,
+          "text": "样本总量"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 11,
+          "text": "150 条观测记录"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 12,
+          "text": "物种类别"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 11,
+          "text": "每类各 50 条"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 12,
+          "text": "花部特征"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 11,
+          "text": "花萼长宽 · 花瓣长宽"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 12,
+          "text": "最强相关"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "div",
+          "fontSize": 11,
+          "text": "花瓣长 × 花瓣宽"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "span",
+          "fontSize": 11,
+          "text": "GROUP MEANS"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "p",
+          "fontSize": 12,
+          "text": "各物种四个花部尺寸的算术平均（cm）"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "p",
+          "fontSize": 12,
+          "text": "解读　setosa 花瓣远小于另两类，virginica 在花萼长与花瓣尺寸上均"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "span",
+          "fontSize": 11,
+          "text": "BOXPLOT"
+        },
+        {
+          "kind": "small-body-text",
+          "tag": "p",
+          "fontSize": 12,
+          "text": "每物种每特征的最小值、四分位与最大值（cm），箱体为中位数 ± IQR"
+        }
+      ],
+      "mobileFontIssuesHint": "warning · 含义（仅 mobile shot 触发）：两类问题合并——(a) kind=small-body-text：正文字号 < 14px，手机上难读；(b) kind=input-under-16px：<input> / <textarea> font-size < 16px，iOS Safari 聚焦时会自动缩放页面（那种一点输入框页面跳一下的贼恶心 UX）。 | 修法：正文 ≥ 14px（16px 更佳）；表单元素 ≥ 16px。可以在移动断点里针对性调大：`@media (max-width: 640px) { body { font-size: 16px; } input, textarea { font-size: 16px; } }`。 | 豁免：(1) 图例 / caption / footnote 类辅助文字，12–13px 可接受，但应控制在页面 5% 以内；(2) 数据密集型表格数字（如财务表 12px 是行业惯例）——需要该单元格开 `tnum` 等宽数字避免飘忽；(3) input 已设 `font-size: 16px` 但仍报出——可能是 inline style / 父级 rem 计算异常，检查实际 computed 值。"
+    }
+  },
+  "engine": "playwright",
+  "chromiumExec": "/opt/vm/preinstall/ms-playwright/chromium-1169/chrome-linux/chrome",
+  "elapsedSec": 13.53
+}
